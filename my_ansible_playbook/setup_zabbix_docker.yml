@@ -1,0 +1,49 @@
+---
+- name: Setup Zabbix Docker Containers
+  hosts: dev.demo.oldbaku.net
+  become: true
+
+  tasks:
+    - name: Install Docker and Docker Compose
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+        state: present
+      become: true
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Create Docker network
+      docker_network:
+        name: zabbix_network
+
+    - name: Copy Docker Compose file
+      copy:
+        src: files/docker-compose.yml  # Replace with the path to your Docker Compose file
+        dest: /opt/zabbix/docker-compose.yml
+      become: true
+
+    - name: Run Zabbix stack containers
+      command: docker-compose up -d
+      args:
+        chdir: /opt/zabbix
+      become: true
+
+    - name: Configure Zabbix server
+      template:
+        src: templates/zabbix_server.conf.j2  # Replace with the path to your Zabbix server config template
+        dest: /opt/zabbix/zabbix_server.conf
+      notify:
+        - restart zabbix-server
+      become: true
+
+    - name: Restart Zabbix server container
+      docker_container:
+        name: zabbix_server
+        state: restarted
+      become: true
