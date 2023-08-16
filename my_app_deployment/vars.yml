@@ -1,5 +1,0 @@
----
-app_name: my_app
-container_port: 80
-host_port: 8080
-domain_name: site.demo.oldbaku.net
